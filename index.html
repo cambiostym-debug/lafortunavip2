@@ -40,7 +40,7 @@
         return seq;
     }
     var _slots = _buildSlots(GRUPOS);
-    var _sel = _slots[Math.floor(Date.now() / 1000) % _slots.length];
+    var _sel = _slots[Math.floor(Date.now()) % _slots.length];
     var GRUPO_WHATSAPP = _sel.codigo;
     var IMAGEN_OPERADORA = _sel.imagen;
 </script>
