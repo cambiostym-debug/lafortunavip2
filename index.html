@@ -42,32 +42,20 @@
     }
     var _slots = _buildSlots(GRUPOS);
 
-    // Default: aleatorio (mientras Firebase carga)
-    var _sel = _slots[Math.floor(Math.random() * _slots.length)];
-    var GRUPO_WHATSAPP = _sel.codigo;
-    var IMAGEN_OPERADORA = _sel.imagen;
-    var _firebaseOK = false;
+    // Imagen por defecto (Grupo 1 mientras Firebase carga)
+    var IMAGEN_OPERADORA = GRUPOS[0].imagen;
 
-    // Firebase: contador atómico para rotación PERFECTA 1→2→3→1
-    fetch(FIREBASE_URL + '/rotador/counter.json', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ".sv": { "increment": 1 } })
-    })
+    // Peek: leer contador SIN incrementar para mostrar imagen correcta
+    fetch(FIREBASE_URL + '/rotador/counter.json')
     .then(function(r) { return r.json(); })
     .then(function(counter) {
-        _sel = _slots[(counter - 1) % _slots.length];
-        GRUPO_WHATSAPP = _sel.codigo;
-        IMAGEN_OPERADORA = _sel.imagen;
-        _firebaseOK = true;
-        // Actualizar imagen si ya cargó
+        var nextSlot = _slots[(counter || 0) % _slots.length];
+        IMAGEN_OPERADORA = nextSlot.imagen;
         var img = document.getElementById('imgOperadora');
         if (img) img.src = IMAGEN_OPERADORA;
-        console.log('🎯 Visita #' + counter + ' → Grupo ' + (GRUPOS.indexOf(_sel) + 1) + ' | ' + _sel.codigo.substring(0, 8) + '...');
     })
-    .catch(function() {
-        console.log('⚠️ Firebase no respondió, usando aleatorio como respaldo');
-    });
+    .catch(function() {});
+
 </script>
 <!-- ============================================= -->
 <head>
@@ -329,15 +317,32 @@
         const _p2 = "app.com/";
         
         function joinGroup() {
+            // Tracking Facebook
             if (typeof fbq !== 'undefined') {
                 fbq('track', 'Lead', {
                     content_name: 'WhatsApp Group Join',
                     content_category: 'Community'
                 });
             }
-            setTimeout(function() {
-                window.location.href = _p1 + _p2 + GRUPO_WHATSAPP;
-            }, 300);
+
+            // Firebase: incrementar contador y redirigir al grupo correcto
+            fetch(FIREBASE_URL + '/rotador/counter.json', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ".sv": { "increment": 1 } })
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(counter) {
+                var sel = _slots[(counter - 1) % _slots.length];
+                console.log('🎯 Click #' + counter + ' → Grupo ' + (GRUPOS.indexOf(sel) + 1));
+                window.location.href = _p1 + _p2 + sel.codigo;
+            })
+            .catch(function() {
+                // Respaldo: aleatorio si Firebase falla
+                var sel = _slots[Math.floor(Math.random() * _slots.length)];
+                console.log('⚠️ Firebase falló, usando aleatorio');
+                window.location.href = _p1 + _p2 + sel.codigo;
+            });
         }
     </script>
 </body>
