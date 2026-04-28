@@ -18,22 +18,56 @@
     // ═══════════════════════════════════════════════════════════
     // ⚠️ NO TOCAR NADA DEBAJO DE ESTA LÍNEA
     // ═══════════════════════════════════════════════════════════
+    var FIREBASE_URL = "https://winter-alliance-474815-b8-default-rtdb.firebaseio.com";
 
-    // Algoritmo: Selección aleatoria ponderada por peso
-    var _totalPeso = GRUPOS.reduce(function(s, g) { return s + g.peso; }, 0);
-    var _rand = Math.random() * _totalPeso;
-    var _acum = 0;
-    var _sel = GRUPOS[0];
-    for (var i = 0; i < GRUPOS.length; i++) {
-        _acum += GRUPOS[i].peso;
-        if (_rand < _acum) { _sel = GRUPOS[i]; break; }
+    // Construir slots intercalados por peso
+    function _buildSlots(grupos) {
+        function gcd(a, b) { return b === 0 ? a : gcd(b, a % b); }
+        var g = grupos[0].peso;
+        for (var i = 1; i < grupos.length; i++) g = gcd(g, grupos[i].peso);
+        var norm = grupos.map(function(gr) { return { g: gr, s: gr.peso / g, p: 0 }; });
+        var total = norm.reduce(function(sum, n) { return sum + n.s; }, 0);
+        var seq = [];
+        for (var pos = 0; pos < total; pos++) {
+            var best = -1, bestR = Infinity;
+            for (var j = 0; j < norm.length; j++) {
+                if (norm[j].p >= norm[j].s) continue;
+                var r = norm[j].p / norm[j].s;
+                if (r < bestR) { bestR = r; best = j; }
+            }
+            seq.push(norm[best].g);
+            norm[best].p++;
+        }
+        return seq;
     }
-    var _grupoIndex = GRUPOS.indexOf(_sel) + 1;
+    var _slots = _buildSlots(GRUPOS);
+
+    // Default: aleatorio (mientras Firebase carga)
+    var _sel = _slots[Math.floor(Math.random() * _slots.length)];
     var GRUPO_WHATSAPP = _sel.codigo;
     var IMAGEN_OPERADORA = _sel.imagen;
+    var _firebaseOK = false;
 
-    // 🔍 DEBUG: Quitar esta línea cuando termines de probar
-    console.log('🎯 Grupo seleccionado: ' + _grupoIndex + ' de ' + GRUPOS.length + ' | Código: ' + _sel.codigo.substring(0, 6) + '...');
+    // Firebase: contador atómico para rotación PERFECTA 1→2→3→1
+    fetch(FIREBASE_URL + '/rotador/counter.json', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ".sv": { "increment": 1 } })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(counter) {
+        _sel = _slots[(counter - 1) % _slots.length];
+        GRUPO_WHATSAPP = _sel.codigo;
+        IMAGEN_OPERADORA = _sel.imagen;
+        _firebaseOK = true;
+        // Actualizar imagen si ya cargó
+        var img = document.getElementById('imgOperadora');
+        if (img) img.src = IMAGEN_OPERADORA;
+        console.log('🎯 Visita #' + counter + ' → Grupo ' + (GRUPOS.indexOf(_sel) + 1) + ' | ' + _sel.codigo.substring(0, 8) + '...');
+    })
+    .catch(function() {
+        console.log('⚠️ Firebase no respondió, usando aleatorio como respaldo');
+    });
 </script>
 <!-- ============================================= -->
 <head>
