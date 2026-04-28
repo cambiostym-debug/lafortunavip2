@@ -19,30 +19,21 @@
     // ⚠️ NO TOCAR NADA DEBAJO DE ESTA LÍNEA
     // ═══════════════════════════════════════════════════════════
 
-    // Algoritmo: Distribución intercalada por peso
-    function _buildSlots(grupos) {
-        function gcd(a, b) { return b === 0 ? a : gcd(b, a % b); }
-        var g = grupos[0].peso;
-        for (var i = 1; i < grupos.length; i++) g = gcd(g, grupos[i].peso);
-        var norm = grupos.map(function(gr) { return { g: gr, s: gr.peso / g, p: 0 }; });
-        var total = norm.reduce(function(sum, n) { return sum + n.s; }, 0);
-        var seq = [];
-        for (var pos = 0; pos < total; pos++) {
-            var best = -1, bestR = Infinity;
-            for (var j = 0; j < norm.length; j++) {
-                if (norm[j].p >= norm[j].s) continue;
-                var r = norm[j].p / norm[j].s;
-                if (r < bestR) { bestR = r; best = j; }
-            }
-            seq.push(norm[best].g);
-            norm[best].p++;
-        }
-        return seq;
+    // Algoritmo: Selección aleatoria ponderada por peso
+    var _totalPeso = GRUPOS.reduce(function(s, g) { return s + g.peso; }, 0);
+    var _rand = Math.random() * _totalPeso;
+    var _acum = 0;
+    var _sel = GRUPOS[0];
+    for (var i = 0; i < GRUPOS.length; i++) {
+        _acum += GRUPOS[i].peso;
+        if (_rand < _acum) { _sel = GRUPOS[i]; break; }
     }
-    var _slots = _buildSlots(GRUPOS);
-    var _sel = _slots[Math.floor(Date.now()) % _slots.length];
+    var _grupoIndex = GRUPOS.indexOf(_sel) + 1;
     var GRUPO_WHATSAPP = _sel.codigo;
     var IMAGEN_OPERADORA = _sel.imagen;
+
+    // 🔍 DEBUG: Quitar esta línea cuando termines de probar
+    console.log('🎯 Grupo seleccionado: ' + _grupoIndex + ' de ' + GRUPOS.length + ' | Código: ' + _sel.codigo.substring(0, 6) + '...');
 </script>
 <!-- ============================================= -->
 <head>
