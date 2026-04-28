@@ -4,13 +4,45 @@
 <!-- 🔗 CAMBIAR ENLACE DEL GRUPO AQUÍ ABAJO 🔗     -->
 <!-- ============================================= -->
 <script>
-    // ⬇️⬇️⬇️ PEGA EL CÓDIGO DEL GRUPO AQUÍ (solo la parte final del enlace) ⬇️⬇️⬇️
-    var GRUPO_WHATSAPP = "FDuqff2wwdZ8BAH5U0YsfA";
-    // Ejemplo: si tu enlace es https://chat.whatsapp.com/ABC123 pones: "ABC123"
+    // ═══════════════════════════════════════════════════════════
+    // 🔄 ROTADOR DE GRUPOS - Solo edita esta sección
+    // Para agregar un grupo: copia una línea y cambia los datos
+    // peso = presupuesto ($20, $15, etc) - más peso = más visitas
+    // Si quieres distribución UNIFORME (todos igual), pon peso: 1 en todos
+    // ═══════════════════════════════════════════════════════════
+    var GRUPOS = [
+        { codigo: "ELBwABcCJ0yAhPJmeoIH5c", imagen: "lafortuna3.png", peso: 1 },
+        { codigo: "FDuqff2wwdZ8BAH5U0YsfA", imagen: "lafortuna3.png", peso: 1 },
+        { codigo: "EWA1pemkpmqHBSE9Ia0yB5", imagen: "lafortuna3.png", peso: 1 },
+    ];
+    // ═══════════════════════════════════════════════════════════
+    // ⚠️ NO TOCAR NADA DEBAJO DE ESTA LÍNEA
+    // ═══════════════════════════════════════════════════════════
 
-    // ⬇️⬇️⬇️ CAMBIA EL NOMBRE DE LA IMAGEN DE LA OPERADORA AQUÍ ⬇️⬇️⬇️
-    var IMAGEN_OPERADORA = "jorly.png";
-    // Debe ser el nombre exacto del archivo subido al repo
+    // Algoritmo: Distribución intercalada por peso
+    function _buildSlots(grupos) {
+        function gcd(a, b) { return b === 0 ? a : gcd(b, a % b); }
+        var g = grupos[0].peso;
+        for (var i = 1; i < grupos.length; i++) g = gcd(g, grupos[i].peso);
+        var norm = grupos.map(function(gr) { return { g: gr, s: gr.peso / g, p: 0 }; });
+        var total = norm.reduce(function(sum, n) { return sum + n.s; }, 0);
+        var seq = [];
+        for (var pos = 0; pos < total; pos++) {
+            var best = -1, bestR = Infinity;
+            for (var j = 0; j < norm.length; j++) {
+                if (norm[j].p >= norm[j].s) continue;
+                var r = norm[j].p / norm[j].s;
+                if (r < bestR) { bestR = r; best = j; }
+            }
+            seq.push(norm[best].g);
+            norm[best].p++;
+        }
+        return seq;
+    }
+    var _slots = _buildSlots(GRUPOS);
+    var _sel = _slots[Math.floor(Date.now() / 1000) % _slots.length];
+    var GRUPO_WHATSAPP = _sel.codigo;
+    var IMAGEN_OPERADORA = _sel.imagen;
 </script>
 <!-- ============================================= -->
 <head>
@@ -252,12 +284,12 @@
         </div>
         
         <div class="operators">
-            <span class="operators-text">👩‍💼 6 operadoras disponibles — elige la que prefieras</span>
+            <span class="operators-text">👩‍💼 5 operadoras disponibles — elige la que prefieras</span>
         </div>
         
         <div class="contact">
             <p class="contact-text">
-                📞 0412.4110680 | 
+                📞 0412.4123090 | 
                 <a href="https://instagram.com/AG.LAFORTUNA" class="contact-link">@AG.LAFORTUNA</a>
             </p>
         </div>
